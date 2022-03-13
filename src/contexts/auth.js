@@ -29,6 +29,7 @@ function AuthProvider({ children }) {
           .doc(uid)
           .set({
             nome,
+            email,
             avatarUrl: null,
           })
           .then(() => {
