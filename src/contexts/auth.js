@@ -53,6 +53,36 @@ function AuthProvider({ children }) {
     setUser(null);
   }
 
+  async function signIn({ email, senha }) {
+    setLoadingAuth(true);
+
+    firebase
+      .auth()
+      .signInWithEmailAndPassword(email, senha)
+      .then(async (value) => {
+        const { uid } = value.user;
+
+        const userProfile = await firebase
+          .firestore()
+          .collection("users")
+          .doc(uid)
+          .get();
+
+        const data = {
+          uid,
+          nome: userProfile.data().nome,
+          email: userProfile.data().email,
+          avatarUrl: userProfile.data().avatarUrl,
+        };
+        setUser(data);
+        storageUser(data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setLoadingAuth(false);
+  }
+
   function storageUser(data) {
     localStorage.setItem(USER_STORAGE, JSON.stringify(data));
   }
@@ -71,7 +101,15 @@ function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ signed: !!user, user, loading, signUp, signOut }}
+      value={{
+        signed: !!user,
+        user,
+        loading,
+        loadingAuth,
+        signUp,
+        signOut,
+        signIn,
+      }}
     >
       {children}
     </AuthContext.Provider>

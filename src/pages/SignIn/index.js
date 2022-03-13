@@ -1,15 +1,21 @@
-import { useState } from "react";
-import "./signIn.css";
-import logo from "../../assets/logo.png";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
+import logo from "../../assets/logo.png";
+import { AuthContext } from "../../contexts/auth";
+import "./signIn.css";
 
 function SignIn() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [senha, setSenha] = useState("");
+
+  const { signIn, loadingAuth } = useContext(AuthContext);
 
   function handleSubmit(e) {
     e.preventDefault();
-    alert("todo");
+
+    if (email !== "" && senha !== "") {
+      signIn({ email, senha });
+    }
   }
 
   return (
@@ -30,11 +36,13 @@ function SignIn() {
           <input
             type="password"
             placeholder="******"
-            value={password}
-            onChange={({ target }) => setPassword(target.value)}
+            value={senha}
+            onChange={({ target }) => setSenha(target.value)}
           />
 
-          <button type="submit">Acessar</button>
+          <button type="submit">
+            {loadingAuth ? "Carregando..." : "Acessar"}
+          </button>
         </form>
 
         <Link to="/register">Criar uma Conta</Link>
@@ -44,3 +52,5 @@ function SignIn() {
 }
 
 export default SignIn;
+
+//TODO fix botão acessar não muda para carregando
