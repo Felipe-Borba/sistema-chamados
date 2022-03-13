@@ -1,15 +1,22 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../../contexts/auth";
+
 import logo from "../../assets/logo.png";
 
 function SignUp() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [senha, setSenha] = useState("");
+
+  const { signUp } = useContext(AuthContext);
 
   function handleSubmit(e) {
     e.preventDefault();
-    alert("todo");
+
+    if (nome !== "" && email !== "" && senha !== "") {
+      signUp({ nome, email, senha });
+    }
   }
 
   return (
@@ -36,10 +43,10 @@ function SignUp() {
           <input
             type="password"
             placeholder="******"
-            value={password}
-            onChange={({ target }) => setPassword(target.value)}
+            value={senha}
+            onChange={({ target }) => setSenha(target.value)}
           />
-          <button type="submit">Acessar</button>
+          <button type="submit">Criar</button>
         </form>
 
         <Link to="/">Já tem uma conta? Entre</Link>

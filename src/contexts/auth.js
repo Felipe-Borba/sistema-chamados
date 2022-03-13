@@ -1,4 +1,5 @@
 import { createContext, useEffect, useState } from "react";
+import firebase from "../services/firebaseConnection";
 
 export const AuthContext = createContext({});
 
@@ -7,24 +8,63 @@ function AuthProvider({ children }) {
   const [loadingAuth, setLoadingAuth] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const USER_STORAGE = "SistemaUser";
+
   useEffect(() => {
-    function loadStorage() {
-      const storageUser = localStorage.getItem("SistemaUser");
-
-      if (storageUser) {
-        setUser(JSON.parse(storageUser));
-      } else {
-        setUser(null);
-      }
-
-      setLoading(false);
-    }
-
     loadStorage();
   }, []);
 
+  async function signUp({ email, senha, nome }) {
+    setLoadingAuth(true);
+    firebase
+      .auth()
+      .createUserWithEmailAndPassword(email, senha)
+      .then(async (value) => {
+        const { uid } = value.user;
+
+        firebase
+          .firestore()
+          .collection("users")
+          .doc(uid)
+          .set({
+            nome,
+            avatarUrl: null,
+          })
+          .then(() => {
+            const data = {
+              uid,
+              nome,
+              email,
+              avatarUrl: null,
+            };
+            setUser(data);
+            storageUser(data);
+          });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setLoadingAuth(false);
+  }
+
+  function storageUser(data) {
+    localStorage.setItem(USER_STORAGE, JSON.stringify(data));
+  }
+
+  function loadStorage() {
+    const storageUser = localStorage.getItem(USER_STORAGE);
+
+    if (storageUser) {
+      setUser(JSON.parse(storageUser));
+    } else {
+      setUser(null);
+    }
+
+    setLoading(false);
+  }
+
   return (
-    <AuthContext.Provider value={{ signed: !!user, user, loading }}>
+    <AuthContext.Provider value={{ signed: !!user, user, loading, signUp }}>
       {children}
     </AuthContext.Provider>
   );
