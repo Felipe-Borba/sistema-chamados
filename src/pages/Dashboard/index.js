@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import Header from "../../components/Header";
 import { AuthContext } from "../../contexts/auth";
 
 function Dashboard() {
@@ -6,6 +7,7 @@ function Dashboard() {
 
   return (
     <div>
+      <Header />
       <h1>Dashboard</h1>
       <button onClick={signOut}>Logout</button>
     </div>
