@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { FiUser } from "react-icons/fi";
+import { toast } from "react-toastify";
 import Header from "../../components/Header";
 import Title from "../../components/Title";
+import firebase from "../../services/firebaseConnection";
 import "./customers.css";
 
 function Customers() {
@@ -9,8 +11,30 @@ function Customers() {
   const [cnpj, setCnpj] = useState("");
   const [endereco, setEndereco] = useState("");
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault();
+
+    if (nomeFantasia !== "" && cnpj !== "" && endereco !== "") {
+      firebase
+        .firestore()
+        .collection("customers")
+        .add({
+          nomeFantasia,
+          cnpj,
+          endereco,
+        })
+        .then(() => {
+          setNomeFantasia("");
+          setCnpj("");
+          setEndereco("");
+          toast.info("Empresa cadastrada com sucesso!");
+        })
+        .catch((err) => {
+          toast.error(err);
+        });
+    } else {
+      toast.error("Preencha todos os Campos");
+    }
   }
 
   return (
