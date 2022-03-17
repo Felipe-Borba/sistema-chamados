@@ -29,8 +29,28 @@ function New() {
     setCustomerSelected(e.target.value);
   }
 
-  function handleRegister(e) {
+  async function handleRegister(e) {
     e.preventDefault();
+
+    firebase
+      .firestore()
+      .collection("chamados")
+      .add({
+        created: new Date(),
+        cliente: customers[customerSelected].nome,
+        clienteId: customers[customerSelected].id,
+        assunto,
+        status,
+        complemento,
+        userId: user.uid,
+      })
+      .then(() => {
+        toast.success("chamado criado com sucesso.");
+        setCustomerSelected(0);
+      })
+      .catch((err) => {
+        toast.error(err);
+      });
   }
 
   useEffect(() => {
