@@ -14,7 +14,7 @@ const listRef = firebase
   .orderBy("created", "desc");
 
 function Dashboard() {
-  const [chamados, setChamados] = useState([1]);
+  const [chamados, setChamados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isEmpty, setIsEmpty] = useState(true);
@@ -32,7 +32,7 @@ function Dashboard() {
           cliente: data.cliente,
           clienteId: data.clienteId,
           created: data.created,
-          createdFormatted: format(data.created.toDate(), "dd/mm/yyyy"),
+          createdFormatted: format(data.created.toDate(), "dd/MM/yyyy"),
           status: data.status,
           complemento: data.complemento,
         });
@@ -49,28 +49,57 @@ function Dashboard() {
     setLoadingMore(false);
   }
 
-  async function loadChamados() {
+  async function handleMore() {
+    setLoadingMore(true);
     listRef
+      .startAfter(lastDocs)
       .limit(5)
       .get()
       .then((snapshot) => {
         updateState(snapshot);
-
-        setLoadingMore(false);
-        setLoading(false);
       })
       .catch((err) => {
         toast.error(err);
         setLoadingMore(false);
-        setLoading(false);
       });
   }
 
   useEffect(() => {
+    async function loadChamados() {
+      listRef
+        .limit(5)
+        .get()
+        .then((snapshot) => {
+          updateState(snapshot);
+
+          setLoading(false);
+        })
+        .catch((err) => {
+          toast.error(err);
+          setLoadingMore(false);
+          setLoading(false);
+        });
+    }
+
     loadChamados();
     return () => {};
   }, []);
 
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="content">
+          <Title name="Atendimentos">
+            <FiMessageSquare size={25} />
+          </Title>
+          <div className="container dashboard">
+            <span>Buscando Chamados...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       <Header />
@@ -105,35 +134,53 @@ function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td data-label="Cliente">Cliente</td>
-                  <td data-label="Assunto">Assunto</td>
-                  <td data-label="Status">
-                    <span
-                      className="badge"
-                      style={{ backgroundColor: "#5cb85c" }}
-                    >
-                      Em aberto
-                    </span>
-                  </td>
-                  <td data-label="Cadastrado">Cadastrado</td>
-                  <td data-label="#">
-                    <button
-                      className="action"
-                      style={{ backgroundColor: "#3583f6" }}
-                    >
-                      <FiSearch color="#FFF" size={17} />{" "}
-                    </button>
-                    <button
-                      className="action"
-                      style={{ backgroundColor: "#f6a935" }}
-                    >
-                      <FiEdit2 color="#FFF" size={17} />{" "}
-                    </button>
-                  </td>
-                </tr>
+                {chamados.map((item, index) => {
+                  return (
+                    <tr key={index}>
+                      <td data-label="Cliente">{item.cliente}</td>
+                      <td data-label="Assunto">{item.assunto}</td>
+                      <td data-label="Status">
+                        <span
+                          className="badge"
+                          style={{
+                            backgroundColor:
+                              item.status === "Aberto" ? "#5cb85c" : "#999",
+                          }}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                      <td data-label="Cadastrado">{item.createdFormatted}</td>
+                      <td data-label="#">
+                        <button
+                          className="action"
+                          style={{ backgroundColor: "#3583f6" }}
+                        >
+                          <FiSearch color="#FFF" size={17} />{" "}
+                        </button>
+                        <button
+                          className="action"
+                          style={{ backgroundColor: "#f6a935" }}
+                        >
+                          <FiEdit2 color="#FFF" size={17} />{" "}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
+            {loadingMore && (
+              <h3 style={{ textAlign: "center", marginTop: 15 }}>
+                Buscando dados...
+              </h3>
+            )}
+            {!loadingMore && !isEmpty && (
+              <button className="btn-more" onClick={handleMore}>
+                Buscar mais
+              </button>
+            )}
           </>
         )}
       </div>
