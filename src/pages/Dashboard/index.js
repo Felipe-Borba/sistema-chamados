@@ -1,15 +1,75 @@
-import React, { useContext, useState } from "react";
+import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
 import { FiEdit2, FiMessageSquare, FiPlus, FiSearch } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import Header from "../../components/Header";
 import Title from "../../components/Title";
-import { AuthContext } from "../../contexts/auth";
+import firebase from "../../services/firebaseConnection";
 import "./dashboard.css";
 
-function Dashboard() {
-  const { signOut } = useContext(AuthContext);
+const listRef = firebase
+  .firestore()
+  .collection("chamados")
+  .orderBy("created", "desc");
 
+function Dashboard() {
   const [chamados, setChamados] = useState([1]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(true);
+  const [lastDocs, setLastDocs] = useState();
+
+  function updateState(snapshot) {
+    const isEmpty = snapshot.size === 0;
+    if (!isEmpty) {
+      const list = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        list.push({
+          id: doc.id,
+          assunto: data.assunto,
+          cliente: data.cliente,
+          clienteId: data.clienteId,
+          created: data.created,
+          createdFormatted: format(data.created.toDate(), "dd/mm/yyyy"),
+          status: data.status,
+          complemento: data.complemento,
+        });
+      });
+
+      const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      setLastDocs(lastDoc);
+      setChamados((chamados) => [...chamados, ...list]);
+      setIsEmpty(false);
+    } else {
+      setIsEmpty(true);
+    }
+
+    setLoadingMore(false);
+  }
+
+  async function loadChamados() {
+    listRef
+      .limit(5)
+      .get()
+      .then((snapshot) => {
+        updateState(snapshot);
+
+        setLoadingMore(false);
+        setLoading(false);
+      })
+      .catch((err) => {
+        toast.error(err);
+        setLoadingMore(false);
+        setLoading(false);
+      });
+  }
+
+  useEffect(() => {
+    loadChamados();
+    return () => {};
+  }, []);
 
   return (
     <div>
