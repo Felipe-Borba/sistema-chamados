@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
+import { useHistory, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Header from "../../components/Header";
 import Title from "../../components/Title";
@@ -9,6 +10,8 @@ import "./new.css";
 
 function New() {
   const { user } = useContext(AuthContext);
+  const { id } = useParams();
+  const history = useHistory();
 
   const [assunto, setAssunto] = useState("Suporte");
   const [status, setStatus] = useState("Aberto");
@@ -16,6 +19,8 @@ function New() {
   const [customers, setCustomers] = useState([]);
   const [loadCustomers, setLoadCustomers] = useState(true);
   const [customerSelected, setCustomerSelected] = useState(0);
+
+  const [idCustomer, setIdCustomer] = useState(false);
 
   function handleChangeSelect(e) {
     setAssunto(e.target.value);
@@ -32,6 +37,31 @@ function New() {
   async function handleRegister(e) {
     e.preventDefault();
 
+    if (idCustomer) {
+      await firebase
+        .firestore()
+        .collection("chamados")
+        .doc(id)
+        .update({
+          cliente: customers[customerSelected].nome,
+          clienteId: customers[customerSelected].id,
+          assunto,
+          status,
+          complemento,
+          userId: user.uid,
+        })
+        .then(() => {
+          toast.success("chamado atualizado com sucesso.");
+          setCustomerSelected(0);
+          setComplemento("");
+          history.push("/dashboard");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      return;
+    }
+
     firebase
       .firestore()
       .collection("chamados")
@@ -47,9 +77,33 @@ function New() {
       .then(() => {
         toast.success("chamado criado com sucesso.");
         setCustomerSelected(0);
+        setComplemento("");
+        history.push("/dashboard");
       })
       .catch((err) => {
-        toast.error(err);
+        console.log(err);
+      });
+  }
+
+  async function loadId(list) {
+    firebase
+      .firestore()
+      .collection("chamados")
+      .doc(id)
+      .get()
+      .then((snapshot) => {
+        const { assunto, status, complemento, clienteId } = snapshot.data();
+        setComplemento(complemento);
+        setAssunto(assunto);
+        setStatus(status);
+
+        const index = list.findIndex((item) => item.id === clienteId);
+        setCustomerSelected(index);
+        setIdCustomer(true);
+      })
+      .catch((err) => {
+        console.log(err);
+        setIdCustomer(false);
       });
   }
 
@@ -77,9 +131,13 @@ function New() {
 
           setCustomers(list);
           setLoadCustomers(false);
+
+          if (id) {
+            loadId(list);
+          }
         })
         .catch((err) => {
-          toast.error(err);
+          console.log(err);
           setLoadCustomers(false);
           setCustomers([{ id: 1, nome: "" }]);
         });
@@ -156,7 +214,7 @@ function New() {
               onChange={({ target }) => setComplemento(target.value)}
             />
 
-            <button type="submit">Registrar</button>
+            <button type="submit">Salvar</button>
           </form>
         </div>
       </div>

@@ -30,7 +30,7 @@ function Customers() {
           toast.info("Empresa cadastrada com sucesso!");
         })
         .catch((err) => {
-          toast.error(err);
+          console.log(err);
         });
     } else {
       toast.error("Preencha todos os Campos");
